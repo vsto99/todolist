@@ -1,25 +1,34 @@
 import { useRef, useState } from "react";
 import { Todo } from "./types";
-import { AgGridReact } from "ag-grid-react"
+import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
-import { ColDef } from "ag-grid-community"
-
+import { ColDef } from "ag-grid-community";
+import Button from "@mui/material/Button";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs, { Dayjs } from 'dayjs';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-
 function TodoList() {
-  const [todo, setTodo] = useState<Todo>({ description: '', priority: 'Medium', date: '' });
+  const [todo, setTodo] = useState<Todo>({ description: '', priority: '', date: '' });
   const [todos, setTodos] = useState<Todo[]>([]);
   const gridRef = useRef<AgGridReact<Todo>>(null);
 
-
   const addTodo = () => {
     setTodos([...todos, todo]);
-    setTodo({ description: '', priority: 'Medium', date: '' });
+    setTodo({ description: '', priority: '', date: '' });
   };
-  
-  
+
+  const handleDateChange = (newValue: Dayjs | null) => {
+    setTodo({ 
+      ...todo, 
+      date: newValue ? newValue.format('DD-MM-YY') : '' 
+    });
+  };
+
   const [columnDefs] = useState<ColDef<Todo>[]>([
     { field: "description", 
       sortable: true, 
@@ -27,8 +36,7 @@ function TodoList() {
       floatingFilter: true,
       resizable: false,
       flex: 1
-
-     },
+    },
     {
       field: "priority",
       sortable: true,
@@ -36,8 +44,6 @@ function TodoList() {
       filter: true,
       resizable: false,
       flex: 1,
-
-      
       cellStyle: (params) =>
         params.value === "High" ? { color: "red" } : 
         params.value === "Medium" ? { color: "orange" } : 
@@ -49,8 +55,7 @@ function TodoList() {
       floatingFilter: true,
       resizable: false,
       flex: 1
-     },
-      
+    },
   ]);
 
   const handleDelete = () => {
@@ -65,30 +70,45 @@ function TodoList() {
     }
   }
 
-
   return (
     <>
-      <input
-        placeholder="Description"
-        onChange={(e) => setTodo({ ...todo, description: e.target.value })}
-        value={todo.description}
-      />
-      <select
-        value={todo.priority}
-        onChange={(e) => setTodo({ ...todo, priority: e.target.value })}
-      >
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
-      </select>
-      <input
-        placeholder="Date"
-        type="date"
-        onChange={(e) => setTodo({ ...todo, date: e.target.value })}
-        value={todo.date}
-      />
-      <button onClick={addTodo}>Add</button>
-      <button onClick={handleDelete}>Delete</button>
+      <fieldset>
+        <legend>Add todo:</legend>
+        
+        <input
+          placeholder="Description"
+          onChange={(e) => setTodo({ ...todo, description: e.target.value })}
+          value={todo.description}
+          className="form-control"
+        />
+        <select
+          value={todo.priority}
+          onChange={(e) => setTodo({ ...todo, priority: e.target.value })}
+          className="form-control"
+        >
+          <option value="" disabled>Priority</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            label="Date"
+            value={todo.date ? dayjs(todo.date) : null}
+            onChange={handleDateChange}
+            slotProps={{
+              textField: { 
+                size: "small",
+                sx: { width: '15%' }
+              }
+            }}
+          />
+        </LocalizationProvider>
+        
+        <Button onClick={addTodo} variant="contained" sx={{ marginRight: '10px', marginLeft: '10px' }}>Add</Button>
+        <Button onClick={handleDelete} variant="outlined" color="error">Delete<DeleteIcon /></Button>
+      </fieldset>
       <div style={{ width: 700, height: 500 }}>
         <div className="ag-theme-material" style={{ width: 700, height: 500 }}>
           <AgGridReact
